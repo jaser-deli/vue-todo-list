@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vue Todo List</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --danger-color: #ef4444;
+            --success-color: #22c55e;
+            --background-color: #f8fafc;
+            --card-background: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-primary);
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 0 20px;
+            line-height: 1.5;
+        }
+
+        .todo-container {
+            background: var(--card-background);
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+
+        h1 {
+            color: var(--text-primary);
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .todo-input {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 2rem;
+            background: var(--background-color);
+            padding: 1rem;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+        }
+
+        .todo-input input {
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .todo-input input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        .todo-input input[type="text"] {
+            flex: 1;
+        }
+
+        .todo-input input[type="date"] {
+            width: 160px;
+            color: var(--text-secondary);
+        }
+
+        button {
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 500;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .todo-input button {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .todo-input button:hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+        }
+
+        .todo-list {
+            list-style: none;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .todo-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            background: var(--card-background);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            gap: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .todo-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+
+        .todo-content {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .todo-content input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--border-color);
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .todo-content span {
+            font-size: 1.1rem;
+        }
+
+        .todo-date {
+            padding: 0.5rem 1rem;
+            background: var(--background-color);
+            border-radius: 20px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .todo-item.completed {
+            background: #f8fafc;
+            border-color: #e2e8f0;
+        }
+
+        .todo-item.completed .todo-content span {
+            text-decoration: line-through;
+            color: var(--text-secondary);
+        }
+
+        .delete-btn {
+            background: var(--danger-color);
+            color: white;
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+        }
+
+        .delete-btn:hover {
+            background: #dc2626;
+        }
+
+        @media (max-width: 640px) {
+            .todo-input {
+                flex-direction: column;
+            }
+            
+            .todo-input input[type="date"] {
+                width: 100%;
+            }
+            
+            .todo-item {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .todo-date {
+                align-self: flex-start;
+            }
+            
+            .delete-btn {
+                align-self: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="todo-container">
+            <h1>Todo List</h1>
+            <div class="todo-input">
+                <input 
+                    type="text" 
+                    v-model="newTodo" 
+                    @keyup.enter="addTodo"
+                    placeholder="Enter a new todo">
+                <input 
+                    type="date" 
+                    v-model="newDate"
+                    :min="today">
+                <button @click="addTodo">Add</button>
+            </div>
+            <ul class="todo-list">
+                <li v-for="(todo, index) in sortedTodos" 
+                    :key="index" 
+                    :class="['todo-item', { completed: todo.completed }]">
+                    <div class="todo-content">
+                        <input 
+                            type="checkbox" 
+                            v-model="todo.completed">
+                        <span>{{ todo.text }}</span>
+                    </div>
+                    <span class="todo-date" :style="{ color: isOverdue(todo.date) ? '#ff4444' : '#666' }">
+                        {{ formatDate(todo.date) }}
+                    </span>
+                    <button class="delete-btn" @click="deleteTodo(index)">Delete</button>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        const { createApp } = Vue
+
+        createApp({
+            data() {
+                return {
+                    newTodo: '',
+                    newDate: new Date().toISOString().split('T')[0],
+                    todos: []
+                }
+            },
+            computed: {
+                today() {
+                    return new Date().toISOString().split('T')[0]
+                },
+                sortedTodos() {
+                    return [...this.todos].sort((a, b) => new Date(a.date) - new Date(b.date))
+                }
+            },
+            methods: {
+                addTodo() {
+                    if (this.newTodo.trim()) {
+                        this.todos.push({
+                            text: this.newTodo,
+                            date: this.newDate,
+                            completed: false
+                        })
+                        this.newTodo = ''
+                        this.newDate = new Date().toISOString().split('T')[0]
+                    }
+                },
+                deleteTodo(index) {
+                    this.todos.splice(index, 1)
+                },
+                formatDate(date) {
+                    return new Date(date).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                    })
+                },
+                isOverdue(date) {
+                    return !this.today && new Date(date) < new Date(new Date().setHours(0, 0, 0, 0))
+                }
+            }
+        }).mount('#app')
+    </script>
+</body>
+</html>
